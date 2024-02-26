@@ -40,9 +40,8 @@ impl ForkDB {
         CacheDB::new(ForkDB::new(rpc_url, block_number))
     }
 
-    pub fn with_measure_rpc_time<T: Into<String>, B: Into<u64>>(mut self, enable: bool) -> Self {
+    pub fn set_measure_rpc_time(&mut self, enable: bool) {
         self.measure_rpc_time = enable;
-        self
     }
 
     pub fn get_rpc_time(&self) -> Duration {
@@ -54,8 +53,8 @@ impl ForkDB {
     }
 
     pub fn make_request<F, R>(&self, f: F) -> anyhow::Result<R>
-    where
-        F: FnOnce(&MiniRpcClient) -> anyhow::Result<R>,
+        where
+            F: FnOnce(&MiniRpcClient) -> anyhow::Result<R>,
     {
         if self.measure_rpc_time {
             let start = time::Instant::now();
