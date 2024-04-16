@@ -1,5 +1,4 @@
 use crate::utils;
-use alloy_rpc_types::Block;
 use anyhow::{anyhow, Context};
 use revm::{
     db::{CacheDB, DatabaseRef},
@@ -8,7 +7,7 @@ use revm::{
     primitives::{alloy_primitives::U64, keccak256, AccountInfo, Address, Bytecode, B256, U256},
     Database,
 };
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::{json, Value};
 use std::time::Duration;
 use std::{
@@ -53,8 +52,8 @@ impl ForkDB {
     }
 
     pub fn make_request<F, R>(&self, f: F) -> anyhow::Result<R>
-        where
-            F: FnOnce(&MiniRpcClient) -> anyhow::Result<R>,
+    where
+        F: FnOnce(&MiniRpcClient) -> anyhow::Result<R>,
     {
         if self.measure_rpc_time {
             let start = time::Instant::now();
@@ -121,10 +120,10 @@ impl DatabaseRef for ForkDB {
         };
 
         let block = self
-            .make_request(|rpc_client| rpc_client.get_block(number))?
+            .make_request(|rpc_client| rpc_client.get_blockhash(number))?
             .context("block not found")?;
 
-        block.header.hash.context("block not finalized")
+        block.hash.context("block not finalized")
     }
 }
 
@@ -203,7 +202,7 @@ impl MiniRpcClient {
         Ok(response)
     }
 
-    fn get_block(&self, block_number: u64) -> anyhow::Result<Option<Block>> {
+    fn get_blockhash(&self, block_number: u64) -> anyhow::Result<Option<Block>> {
         let response = self.do_request::<Option<Block>>(
             "eth_getBlockByNumber",
             json!([Self::format_block_tag(block_number), false]),
@@ -264,4 +263,9 @@ impl MiniRpcClient {
 
         Ok((balance, nonce.as_limbs()[0], code))
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct Block {
+    pub hash: Option<B256>,
 }

@@ -4,9 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy.git", rev = "6f8ebb45afca1a201a11d421ec46db0f7a1d8d08" }
 anyhow = "1"
-revm = "7"
+revm = { version = "7", features = ["serde"] }
 serde = "1"
 serde_json = "1"
 tracing = "0"
