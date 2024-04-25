@@ -1,5 +1,4 @@
 use crate::utils;
-use anyhow::{anyhow, Context};
 use revm::{
     db::{CacheDB, DatabaseRef},
     interpreter,
@@ -14,6 +13,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
     time,
 };
+use eyre::{Context, ContextCompat, eyre};
 
 pub struct ForkDB {
     rpc_client: MiniRpcClient,
@@ -51,9 +51,9 @@ impl ForkDB {
         self.cumulative_rpc_time.store(0, Ordering::Relaxed);
     }
 
-    pub fn make_request<F, R>(&self, f: F) -> anyhow::Result<R>
+    pub fn make_request<F, R>(&self, f: F) -> eyre::Result<R>
     where
-        F: FnOnce(&MiniRpcClient) -> anyhow::Result<R>,
+        F: FnOnce(&MiniRpcClient) -> eyre::Result<R>,
     {
         if self.measure_rpc_time {
             let start = time::Instant::now();
@@ -69,7 +69,7 @@ impl ForkDB {
 }
 
 impl Database for ForkDB {
-    type Error = anyhow::Error;
+    type Error = eyre::Error;
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         DatabaseRef::basic_ref(self, address)
@@ -89,7 +89,7 @@ impl Database for ForkDB {
 }
 
 impl DatabaseRef for ForkDB {
-    type Error = anyhow::Error;
+    type Error = eyre::Error;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let (balance, nonce, code) = self
@@ -116,7 +116,7 @@ impl DatabaseRef for ForkDB {
     fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
         let number = match utils::u256_to_u64(&number) {
             Some(number) => number,
-            None => anyhow::bail!("block number too large"),
+            None => eyre::bail!("block number too large"),
         };
 
         let block = self
@@ -153,18 +153,18 @@ impl MiniRpcClient {
         })
     }
 
-    fn handle_response<T: DeserializeOwned>(mut response: Value) -> anyhow::Result<T> {
+    fn handle_response<T: DeserializeOwned>(mut response: Value) -> eyre::Result<T> {
         if let Some(error) = response.get("error") {
-            anyhow::bail!("rpc error: {error}");
+            eyre::bail!("rpc error: {error}");
         } else if response.get("result").is_some() {
             let value = response["result"].take();
             return serde_json::from_value(value).context("fail to deserialize result");
         } else {
-            anyhow::bail!("rpc response missing result")
+            eyre::bail!("rpc response missing result")
         }
     }
 
-    fn do_request<T: DeserializeOwned>(&self, method: &str, params: Value) -> anyhow::Result<T> {
+    fn do_request<T: DeserializeOwned>(&self, method: &str, params: Value) -> eyre::Result<T> {
         let request = Self::make_request(1, method, &params);
 
         let response = self
@@ -189,7 +189,7 @@ impl MiniRpcClient {
         address: &Address,
         index: &B256,
         block_number: u64,
-    ) -> anyhow::Result<B256> {
+    ) -> eyre::Result<B256> {
         let response = self.do_request::<B256>(
             "eth_getStorageAt",
             json!([
@@ -202,7 +202,7 @@ impl MiniRpcClient {
         Ok(response)
     }
 
-    fn get_blockhash(&self, block_number: u64) -> anyhow::Result<Option<Block>> {
+    fn get_blockhash(&self, block_number: u64) -> eyre::Result<Option<Block>> {
         let response = self.do_request::<Option<Block>>(
             "eth_getBlockByNumber",
             json!([Self::format_block_tag(block_number), false]),
@@ -215,7 +215,7 @@ impl MiniRpcClient {
         &self,
         address: &Address,
         block_number: u64,
-    ) -> anyhow::Result<(U256, u64, Bytes)> {
+    ) -> eyre::Result<(U256, u64, Bytes)> {
         let requests = json!([
             Self::make_request(
                 1,
@@ -248,10 +248,10 @@ impl MiniRpcClient {
 
         let results = response
             .as_array_mut()
-            .ok_or(anyhow!("expect array response"))?;
+            .ok_or(eyre!("expect array response"))?;
 
         if results.len() != 3 {
-            anyhow::bail!("expect 3 responses, got {}", results.len());
+            eyre::bail!("expect 3 responses, got {}", results.len());
         }
 
         let balance =

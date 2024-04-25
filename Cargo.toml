@@ -1,6 +1,6 @@
 [package]
 name = "revm-fork-db"
-version = "8.0.0"
+version = "8.1.0"
 edition = "2021"
 license = "MIT"
 description = "A lightweight fork database implementation for revm"
@@ -10,7 +10,7 @@ repository = "https://github.com/fuzzland/revm-fork-db"
 readme = "./README.md"
 
 [dependencies]
-anyhow = "1"
+eyre = "0.6"
 revm = { version = "8", features = ["serde"] }
 serde = "1"
 serde_json = "1"
