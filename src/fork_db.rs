@@ -44,7 +44,7 @@ impl ForkDB {
     }
 
     pub fn get_rpc_time(&self) -> Duration {
-        Duration::from_millis(self.cumulative_rpc_time.load(Ordering::Relaxed))
+        Duration::from_nanos(self.cumulative_rpc_time.load(Ordering::Relaxed))
     }
 
     pub fn reset_rpc_time(&mut self) {
@@ -58,7 +58,7 @@ impl ForkDB {
         if self.measure_rpc_time {
             let start = time::Instant::now();
             let result = f(&self.rpc_client)?;
-            let elapsed = start.elapsed().as_millis() as u64;
+            let elapsed = start.elapsed().as_nanos() as u64;
             self.cumulative_rpc_time
                 .fetch_add(elapsed, Ordering::Relaxed);
             Ok(result)
