@@ -11,7 +11,8 @@ readme = "./README.md"
 
 [dependencies]
 eyre = "0.6"
-revm = { version = "8", features = ["serde"] }
+# revm = { version = "8", features = ["serde"] }
+revm = { path = "../dit-revm/crates/revm", features = ["serde"] }
 serde = "1"
 serde_json = "1"
 tracing = "0"
