@@ -12,9 +12,9 @@ readme = "./README.md"
 [dependencies]
 eyre = "0.6"
 # revm = { version = "8", features = ["serde"] }
-revm = { git = "git@github.com:fuzzland/dit-revm.git", features = [
+revm = { git = "https://github.com/fuzzland/dit-revm.git", rev = "e4a8e58", features = [
     "serde",
-], rev = "e4a8e58" }
+] }
 serde = "1"
 serde_json = "1"
 tracing = "0"
